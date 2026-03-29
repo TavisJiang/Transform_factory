@@ -1,0 +1,77 @@
+# latex2kb 配置文件 / Configuration File
+# 复制为 latex2kb.yaml 并按需修改 / Copy to latex2kb.yaml and customize
+#
+# 使用方法 / Usage:
+#   latex2kb input/ output/ --config latex2kb.yaml
+#
+# 配置优先级 / Priority (high → low):
+#   命令行参数 > 环境变量 > 配置文件 > 默认值
+#   CLI flags > env vars > config file > defaults
+
+# ──────────────────────────────────────────────
+# 基本设置 / Basic settings
+# ──────────────────────────────────────────────
+
+# 主 .tex 文件名（留空则自动检测）
+# Main .tex filename (leave empty for auto-detection)
+# main_tex: main.tex
+
+# 源文件编码 / Source file encoding
+encoding: utf-8
+
+# ──────────────────────────────────────────────
+# 图片处理 / Image handling
+# ──────────────────────────────────────────────
+
+# 是否复制图片到输出目录 / Copy images to output directory
+copy_images: true
+
+# 是否启用 AI 图片描述 / Enable AI-powered image descriptions
+image_descriptions: false
+
+# ──────────────────────────────────────────────
+# AI 提供商配置 / AI Provider Configuration
+#
+# 用于图片描述等 AI 功能
+# Used for image descriptions and other AI features
+# ──────────────────────────────────────────────
+
+ai:
+  # 提供商 / Provider: anthropic | openai | openai-compatible
+  provider: anthropic
+
+  # 模型名称 / Model name
+  # Anthropic:            claude-haiku-4-5-20251001 (默认, 快且便宜)
+  #                       claude-sonnet-4-6-20250514
+  # OpenAI:               gpt-4o-mini (默认, 快且便宜)
+  #                       gpt-4o
+  # OpenAI-compatible:    任意模型名
+  model: claude-haiku-4-5-20251001
+
+  # API Key（推荐使用环境变量，比写在文件里更安全）
+  # API key (prefer env vars — safer than putting keys in files)
+  #
+  # 支持的环境变量 / Supported env vars:
+  #   Anthropic:  ANTHROPIC_API_KEY
+  #   OpenAI:     OPENAI_API_KEY
+  #   通用:       LATEX2KB_API_KEY (覆盖以上所有 / overrides all above)
+  #
+  # 也可以直接填写（不推荐提交到版本控制）
+  # Or set directly here (not recommended for version control):
+  # api_key: sk-xxx
+
+  # 自定义 API 端点（仅 openai-compatible 模式需要）
+  # Custom API endpoint (only for openai-compatible provider)
+  # base_url: https://your-api.example.com/v1
+
+  # 图片描述的提示词 / Prompt for image descriptions
+  image_prompt: >
+    Describe this scientific figure concisely in 1-2 sentences.
+    Focus on what the figure shows (data, diagram type, key features)
+    rather than aesthetic qualities.
+
+  # 每次请求的最大 token 数 / Max tokens per request
+  max_tokens: 300
+
+  # 请求超时（秒）/ Request timeout in seconds
+  timeout: 30

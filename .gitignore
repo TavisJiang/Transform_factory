@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Build artifacts
+*.log
+*.aux
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.xdv
+*.out
+*.toc
+*.lof
+*.lot
+
+# Project-specific
+output/
+output_test/
+*.egg-info/
+
+# Personal LaTeX projects (example holders are personal data)
+holders/
+
+# Local dev settings
+.claude/
+CLAUDE.md
+
+# Config files with secrets (example file is tracked)
+latex2kb.yaml
+!latex2kb.example.yaml

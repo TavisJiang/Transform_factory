@@ -1,0 +1,105 @@
+# Built-in macro definitions for common LaTeX packages.
+# These are used when pylatexenc doesn't know about a command.
+# Format: name -> {num_args, body, is_math}
+#
+# Math-mode macros (is_math: true) are preserved as LaTeX in $...$ blocks.
+# Text-mode macros (is_math: false) are expanded to Markdown equivalents.
+
+# --- physics package ---
+ket:
+  num_args: 1
+  body: "\\lvert #1 \\rangle"
+  is_math: true
+
+bra:
+  num_args: 1
+  body: "\\langle #1 \\rvert"
+  is_math: true
+
+braket:
+  num_args: 2
+  body: "\\langle #1 | #2 \\rangle"
+  is_math: true
+
+ketbra:
+  num_args: 2
+  body: "\\lvert #1 \\rangle\\langle #2 \\rvert"
+  is_math: true
+
+proj:
+  num_args: 1
+  body: "\\lvert #1 \\rangle\\langle #1 \\rvert"
+  is_math: true
+
+expval:
+  num_args: 1
+  body: "\\langle #1 \\rangle"
+  is_math: true
+
+abs:
+  num_args: 1
+  body: "\\lvert #1 \\rvert"
+  is_math: true
+
+norm:
+  num_args: 1
+  body: "\\lVert #1 \\rVert"
+  is_math: true
+
+comm:
+  num_args: 2
+  body: "[#1, #2]"
+  is_math: true
+
+acomm:
+  num_args: 2
+  body: "\\{#1, #2\\}"
+  is_math: true
+
+# --- amsmath operators ---
+tr:
+  num_args: 0
+  body: "\\operatorname{tr}"
+  is_math: true
+
+Tr:
+  num_args: 0
+  body: "\\operatorname{Tr}"
+  is_math: true
+
+diag:
+  num_args: 0
+  body: "\\operatorname{diag}"
+  is_math: true
+
+rank:
+  num_args: 0
+  body: "\\operatorname{rank}"
+  is_math: true
+
+# --- siunitx ---
+SI:
+  num_args: 2
+  body: "#1 #2"
+  is_math: false
+
+si:
+  num_args: 1
+  body: "#1"
+  is_math: false
+
+num:
+  num_args: 1
+  body: "#1"
+  is_math: false
+
+# --- common text macros ---
+textsuperscript:
+  num_args: 1
+  body: "^{#1}"
+  is_math: false
+
+textsubscript:
+  num_args: 1
+  body: "_{#1}"
+  is_math: false

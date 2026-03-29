@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latex2kb"
+version = "0.1.0"
+description = "Convert LaTeX projects into structured Markdown knowledge bases for AI consumption"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "TavisJiang"},
+]
+keywords = [
+    "latex",
+    "markdown",
+    "knowledge-base",
+    "ai",
+    "academic",
+    "converter",
+    "parser",
+    "bibliography",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Markup :: LaTeX",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pylatexenc>=2.10",
+    "bibtexparser>=1.4,<2",
+    "pyyaml>=6.0",
+    "click>=8.0",
+]
+
+[project.optional-dependencies]
+ai = ["httpx>=0.25", "pillow>=10.0"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+
+[project.scripts]
+latex2kb = "latex2kb.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/taojiang/Transform_factory"
+Repository = "https://github.com/taojiang/Transform_factory"
+Issues = "https://github.com/taojiang/Transform_factory/issues"
+Changelog = "https://github.com/taojiang/Transform_factory/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.setuptools.package-data]
+latex2kb = ["../config/*.yaml"]
