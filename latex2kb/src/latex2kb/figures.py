@@ -183,6 +183,48 @@ def generate_image_description(image_path: Path, ai_config: AIConfig) -> str | N
         return None
 
 
+def call_ai_text(prompt: str, ai_config: AIConfig, max_tokens: int | None = None) -> str | None:
+    """Call AI with a text-only prompt (no image). Used for synthesis."""
+    try:
+        import httpx
+    except ImportError:
+        logger.warning("httpx not installed. Install with: pip install latex2kb[ai]")
+        return None
+    if not ai_config.api_key:
+        return None
+    tokens = max_tokens or ai_config.max_tokens
+    provider = ai_config.provider.lower()
+    try:
+        if provider == "anthropic":
+            response = httpx.post(
+                'https://api.anthropic.com/v1/messages',
+                headers={'x-api-key': ai_config.api_key, 'anthropic-version': '2023-06-01',
+                         'content-type': 'application/json'},
+                json={'model': ai_config.effective_model, 'max_tokens': tokens,
+                      'messages': [{'role': 'user', 'content': prompt}]},
+                timeout=ai_config.timeout,
+            )
+            response.raise_for_status()
+            return response.json()['content'][0]['text'].strip()
+        elif provider in ("openai", "openai-compatible"):
+            base_url = ai_config.base_url or 'https://api.openai.com/v1'
+            response = httpx.post(
+                f'{base_url.rstrip("/")}/chat/completions',
+                headers={'Authorization': f'Bearer {ai_config.api_key}',
+                         'Content-Type': 'application/json'},
+                json={'model': ai_config.effective_model, 'max_tokens': tokens,
+                      'messages': [{'role': 'user', 'content': prompt}]},
+                timeout=ai_config.timeout,
+            )
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content'].strip()
+        else:
+            return None
+    except Exception as e:
+        logger.warning("AI text call failed: %s", e)
+        return None
+
+
 def _call_anthropic(image_data: str, media_type: str, cfg: AIConfig) -> str | None:
     """Call Anthropic Messages API."""
     import httpx

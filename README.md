@@ -48,8 +48,35 @@ output/my_thesis_2kb/
 | **算法伪代码** | algorithm2e → 可读的 Markdown 伪代码 |
 | **表格转换** | booktabs tabular → Markdown 管道表格 |
 | **通用性** | 适用于任意 LaTeX 项目，不限于特定模板 |
+| **图片文件夹转换** | 纯图片文件夹 → AI 分析 + 整合为结构化 Markdown（需 API key） |
 
 ---
+
+### img2kb：图片文件夹 → Markdown
+
+除了 LaTeX 项目，`latex2kb` 还支持将**纯图片文件夹**转换为 Markdown 文档。自动检测：如果输入目录没有 `.tex` 文件但有图片，自动进入图片管线。
+
+```bash
+# 图片文件夹中只有 .png/.jpg 等图片
+latex2kb path/to/image_folder output/
+#  → output/image_folder_2kb/
+#       ├── document.md       # AI 整合生成的文档
+#       └── figures/           # 仅包含无法文本化的图片
+```
+
+**工作原理（两轮 AI 调用）：**
+
+1. **Round 1 — 逐图分析**：对每张图片调用 AI，提取文字、描述内容、判断是否可文本化
+   - 纯文字/表格/公式截图 → 标记为"可文本化"，内容直接写入 Markdown
+   - 图表/示意图/照片 → 标记为"需引用"，复制到 `figures/` 并在文档中引用
+2. **Round 2 — 整合生成**：将所有分析结果交给 AI，生成一份连贯的 Markdown 文档
+
+**必须配置 API key**（纯图片转换依赖 AI 理解能力）：
+
+```bash
+export ANTHROPIC_API_KEY=your-api-key
+latex2kb path/to/screenshots output/
+```
 
 ## 使用步骤 / Step-by-Step Usage
 

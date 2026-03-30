@@ -40,9 +40,9 @@ def main(
     verbose: bool,
     dry_run: bool,
 ) -> None:
-    """Convert a LaTeX project into a structured Markdown knowledge base.
+    """Convert a LaTeX project or image folder into a structured Markdown knowledge base.
 
-    INPUT_DIR is the LaTeX project folder (containing main.tex).
+    INPUT_DIR is the source folder (LaTeX project or image folder — auto-detected).
     OUTPUT_DIR is where the Markdown knowledge base will be written.
     """
     log_level = logging.DEBUG if verbose else logging.INFO
@@ -52,19 +52,7 @@ def main(
     )
 
     # Load config file
-    config_dict = None
-    if config_file:
-        config_dict = _load_config_file(config_file)
-        if config_dict:
-            click.echo(f"Loaded config: {config_file}")
-    else:
-        # Auto-detect latex2kb.yaml in input dir or current dir
-        for candidate in [input_dir / 'latex2kb.yaml', Path('latex2kb.yaml')]:
-            if candidate.exists():
-                config_dict = _load_config_file(candidate)
-                if config_dict:
-                    click.echo(f"Auto-loaded config: {candidate}")
-                break
+    config_dict = _load_config(config_file, input_dir)
 
     # Apply config file defaults (CLI flags override)
     if config_dict:
@@ -86,11 +74,24 @@ def main(
     # Auto-generate subfolder: {input_folder_name}_2kb
     actual_output = output_dir.resolve() / (input_dir.resolve().name + '_2kb')
 
+    # Auto-detect input type
+    from latex2kb.img2kb_pipeline import is_image_folder
+
+    if is_image_folder(input_dir.resolve()):
+        _run_img2kb(input_dir.resolve(), actual_output, api_key, dry_run, config_dict, verbose)
+    else:
+        _run_latex2kb(input_dir.resolve(), actual_output, main_tex, encoding,
+                      no_copy_images, image_descriptions, api_key, dry_run, config_dict, verbose)
+
+
+def _run_latex2kb(input_dir, output_dir, main_tex, encoding,
+                  no_copy_images, image_descriptions, api_key, dry_run, config_dict, verbose):
+    """Run the LaTeX-to-Markdown pipeline."""
     from latex2kb.pipeline import run_pipeline, PipelineConfig
 
     config = PipelineConfig(
-        input_dir=input_dir.resolve(),
-        output_dir=actual_output,
+        input_dir=input_dir,
+        output_dir=output_dir,
         main_tex_override=main_tex,
         encoding=encoding,
         copy_images=not no_copy_images,
@@ -110,9 +111,55 @@ def main(
         sys.exit(1)
 
     if not dry_run:
-        click.echo(f"Done! Knowledge base written to: {actual_output}")
+        click.echo(f"Done! Knowledge base written to: {output_dir}")
     else:
         click.echo("Dry run complete. No files written.")
+
+
+def _run_img2kb(input_dir, output_dir, api_key, dry_run, config_dict, verbose):
+    """Run the image-to-Markdown pipeline."""
+    from latex2kb.img2kb_pipeline import run_img2kb, Img2kbConfig
+
+    click.echo("Detected image folder (no .tex files). Running img2kb pipeline.")
+
+    config = Img2kbConfig(
+        input_dir=input_dir,
+        output_dir=output_dir,
+        api_key=api_key,
+        dry_run=dry_run,
+        config_dict=config_dict,
+    )
+
+    try:
+        run_img2kb(config)
+    except Exception as e:
+        if verbose:
+            logging.exception("Pipeline failed")
+        else:
+            click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+    if not dry_run:
+        click.echo(f"Done! Knowledge base written to: {output_dir}")
+    else:
+        click.echo("Dry run complete. No files written.")
+
+
+def _load_config(config_file, input_dir):
+    """Load config from file or auto-detect."""
+    config_dict = None
+    if config_file:
+        config_dict = _load_config_file(config_file)
+        if config_dict:
+            click.echo(f"Loaded config: {config_file}")
+    else:
+        for candidate in [input_dir / 'latex2kb.yaml', Path('latex2kb.yaml')]:
+            if candidate.exists():
+                config_dict = _load_config_file(candidate)
+                if config_dict:
+                    click.echo(f"Auto-loaded config: {candidate}")
+                break
+    return config_dict
 
 
 def _load_config_file(path: Path) -> dict | None:
