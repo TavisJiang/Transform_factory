@@ -198,10 +198,8 @@ def _parse_analysis_response(filename: str, raw: str) -> ImageAnalysis:
 
 
 def _get_synthesis_config(ai_cfg: AIConfig) -> AIConfig:
-    """Get AI config for synthesis, preferring a more capable model."""
-    # For synthesis we need a model with larger context and better reasoning.
-    # Upgrade from haiku to sonnet if user didn't explicitly set a model.
-    synth = AIConfig(
+    """Get AI config for synthesis. Same model as Round 1, only adjust tokens/timeout."""
+    return AIConfig(
         provider=ai_cfg.provider,
         model=ai_cfg.model,
         api_key=ai_cfg.api_key,
@@ -210,18 +208,6 @@ def _get_synthesis_config(ai_cfg: AIConfig) -> AIConfig:
         max_tokens=8000,
         timeout=120,
     )
-    # Auto-upgrade for synthesis if using default cheap models
-    if not ai_cfg.model or ai_cfg.model in ('claude-haiku-4-5-20251001', 'gpt-4o-mini'):
-        upgrades = {
-            'anthropic': 'claude-sonnet-4-6-20250514',
-            'openai': 'gpt-4o',
-            'openai-compatible': 'gpt-4o',
-        }
-        upgraded = upgrades.get(ai_cfg.provider, '')
-        if upgraded:
-            synth.model = upgraded
-            logger.info("  Upgraded model for synthesis: %s → %s", ai_cfg.effective_model, upgraded)
-    return synth
 
 
 def _synthesize_document(analyses: list[ImageAnalysis], ai_cfg: AIConfig) -> str:
