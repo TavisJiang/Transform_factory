@@ -158,7 +158,7 @@ latex2kb <input_dir> <output_dir> [OPTIONS]
 Options:
   --config FILE            YAML 配置文件（见 latex2kb.example.yaml）
   --main-tex FILE          指定主 .tex 文件（默认自动检测）
-  --image-descriptions     启用 AI 图片描述
+  --image-descriptions     启用 AI 图片描述（LaTeX 管线可选功能）
   --provider [anthropic|openai|openai-compatible]
                            AI 提供商（默认 anthropic）
   --api-key KEY            API Key（也可通过环境变量设置）
@@ -168,6 +168,14 @@ Options:
   --dry-run                预览模式，不写入文件
   --version                显示版本号
 ```
+
+**输出目录规则**：实际输出在 `<output_dir>/<input_name>_2kb/` 下自动创建。例如 `latex2kb my_thesis output/` → `output/my_thesis_2kb/`。
+
+**自动检测输入类型**：
+- 输入目录含 `.tex` 文件 → LaTeX 管线（不需要 AI）
+- 输入目录仅含图片 → img2kb 管线（**必须配置 API key**，模型需支持 vision）
+
+img2kb 的 `analysis_max_tokens`、`synthesis_max_tokens`、`synthesis_timeout` 通过配置文件 `latex2kb.yaml` 的 `img2kb:` 段设置。
 
 ## 配置文件 / Config File
 

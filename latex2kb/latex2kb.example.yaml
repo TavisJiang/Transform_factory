@@ -18,6 +18,10 @@
 # 源文件编码 / Source file encoding
 encoding: utf-8
 
+# 输出语言 / Output language for labels (Figure/图, Table/表, etc.)
+# auto = follow source content, en = English, zh = Chinese
+output_language: auto
+
 # ──────────────────────────────────────────────
 # LaTeX 管线设置 / LaTeX pipeline settings
 # ──────────────────────────────────────────────

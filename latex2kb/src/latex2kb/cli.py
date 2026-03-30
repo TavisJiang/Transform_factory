@@ -153,7 +153,11 @@ def _load_config(config_file, input_dir):
         if config_dict:
             click.echo(f"Loaded config: {config_file}")
     else:
-        for candidate in [input_dir / 'latex2kb.yaml', Path('latex2kb.yaml')]:
+        for candidate in [
+            input_dir / 'latex2kb.yaml',
+            Path('latex2kb.yaml'),
+            Path('latex2kb') / 'latex2kb.yaml',
+        ]:
             if candidate.exists():
                 config_dict = _load_config_file(candidate)
                 if config_dict:

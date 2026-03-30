@@ -56,8 +56,6 @@ def load_ai_config(
             cfg.model = ai_section.get("model", cfg.model)
             cfg.api_key = ai_section.get("api_key", cfg.api_key)
             cfg.base_url = ai_section.get("base_url", cfg.base_url)
-            cfg.image_prompt = ai_section.get("image_prompt", cfg.image_prompt)
-            cfg.max_tokens = ai_section.get("max_tokens", cfg.max_tokens)
             cfg.timeout = ai_section.get("timeout", cfg.timeout)
 
     # Layer 2: env vars

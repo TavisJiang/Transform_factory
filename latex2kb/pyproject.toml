@@ -53,10 +53,10 @@ dev = ["pytest>=7.0", "pytest-cov>=4.0"]
 latex2kb = "latex2kb.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/taojiang/Transform_factory"
-Repository = "https://github.com/taojiang/Transform_factory"
-Issues = "https://github.com/taojiang/Transform_factory/issues"
-Changelog = "https://github.com/taojiang/Transform_factory/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/TavisJiang/Transform_factory"
+Repository = "https://github.com/TavisJiang/Transform_factory"
+Issues = "https://github.com/TavisJiang/Transform_factory/issues"
+Changelog = "https://github.com/TavisJiang/Transform_factory/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -36,6 +36,7 @@ class ImageAnalysis:
     visual_description: str   # what the image shows visually
     is_textualizable: bool    # True = content can be fully represented as text
     category: str             # e.g. "text/table", "diagram", "photo", "chart", "screenshot"
+    language: str = ""        # detected language: zh, en, ja, mixed, etc.
 
 
 def run_img2kb(config: Img2kbConfig) -> None:
@@ -135,15 +136,17 @@ def _analyze_image(image_path: Path, ai_cfg: AIConfig, max_tokens: int = 2000) -
         '  "extracted_text": "all text/equations visible in the image, verbatim",\n'
         '  "visual_description": "concise description of what the image shows",\n'
         '  "is_textualizable": true/false,\n'
-        '  "category": "text|table|diagram|chart|photo|screenshot|equation|other"\n'
+        '  "category": "text|table|diagram|chart|photo|screenshot|equation|other",\n'
+        '  "language": "detected language of the text content, e.g. zh, en, ja, mixed"\n'
         "}\n\n"
         "Rules for is_textualizable:\n"
         "- true: the image is purely text, a table of numbers/text, or equations "
         "that can be fully represented in Markdown (including LaTeX math $...$)\n"
         "- false: the image contains visual information (diagrams, plots, photos, "
         "charts, circuits, schematics) that cannot be adequately described by text alone\n\n"
-        "For extracted_text: reproduce ALL text faithfully. "
-        "For math/equations, use LaTeX notation like $E=mc^2$ or $$...$$."
+        "For extracted_text: reproduce ALL text faithfully in the ORIGINAL language. "
+        "Do NOT translate. For math/equations, use LaTeX notation like $E=mc^2$ or $$...$$.\n"
+        "For visual_description: describe in the SAME language as the text in the image."
     )
 
     # Create a copy with img2kb-specific settings (don't mutate the shared config)
@@ -192,6 +195,7 @@ def _parse_analysis_response(filename: str, raw: str) -> ImageAnalysis:
             visual_description=data.get('visual_description', ''),
             is_textualizable=bool(data.get('is_textualizable', False)),
             category=data.get('category', 'other'),
+            language=data.get('language', ''),
         )
     except (json.JSONDecodeError, KeyError) as e:
         logger.warning("Failed to parse AI response for %s: %s", filename, e)
@@ -220,11 +224,45 @@ def _get_synthesis_config(ai_cfg: AIConfig, max_tokens: int = 8000, timeout: int
 
 def _synthesize_document(analyses: list[ImageAnalysis], ai_cfg: AIConfig) -> str:
     """Round 2: Synthesize all image analyses into a coherent Markdown document."""
+    # Detect dominant language from analyses
+    lang_counts: dict[str, int] = {}
+    for a in analyses:
+        if a.language:
+            lang_counts[a.language] = lang_counts.get(a.language, 0) + 1
+    dominant_lang = max(lang_counts, key=lang_counts.get) if lang_counts else ''
+
+    lang_instruction = ''
+    if dominant_lang == 'zh':
+        lang_instruction = (
+            "IMPORTANT: The source content is in Chinese. "
+            "You MUST write the entire document in Chinese. "
+            "All headings, transitions, descriptions, and commentary must be in Chinese. "
+            "Only keep English for proper nouns, technical terms, and LaTeX math."
+        )
+    elif dominant_lang == 'en':
+        lang_instruction = (
+            "IMPORTANT: The source content is in English. "
+            "You MUST write the entire document in English."
+        )
+    elif dominant_lang:
+        lang_instruction = (
+            f"IMPORTANT: The source content is primarily in '{dominant_lang}'. "
+            f"You MUST write the entire document in the same language ('{dominant_lang}'). "
+            "Do NOT switch to English unless the source content is in English."
+        )
+    else:
+        lang_instruction = (
+            "Write in the same language as the source content. "
+            "If the extracted text is in Chinese, write in Chinese. "
+            "If in English, write in English. Do NOT translate."
+        )
+
     # Build the context for AI
     parts = []
     for i, a in enumerate(analyses, 1):
         parts.append(f"--- Image {i}: {a.filename} ---")
         parts.append(f"Category: {a.category}")
+        parts.append(f"Language: {a.language}")
         parts.append(f"Textualizable: {a.is_textualizable}")
         if a.extracted_text:
             parts.append(f"Extracted text:\n{a.extracted_text}")
@@ -241,6 +279,7 @@ def _synthesize_document(analyses: list[ImageAnalysis], ai_cfg: AIConfig) -> str
     prompt = (
         "You are given analyses of multiple images from a folder. "
         "Your task is to synthesize them into a single, coherent Markdown document.\n\n"
+        f"{lang_instruction}\n\n"
         "RULES:\n"
         "1. Organize the content logically with headings (##, ###) and sections.\n"
         "2. For TEXTUALIZABLE images: incorporate their content directly as text. "
@@ -248,12 +287,10 @@ def _synthesize_document(analyses: list[ImageAnalysis], ai_cfg: AIConfig) -> str
         "Do NOT reference these images — their content is fully represented in text.\n"
         "3. For NON-TEXTUALIZABLE images: embed them using ![description](figures/filename). "
         f"These images will be in figures/: {ref_list}\n"
-        "4. Write in the same language as the source content. "
-        "If content is in Chinese, write in Chinese. If English, write in English.\n"
-        "5. Make the document flow naturally — add transitions, context, and structure. "
+        "4. Make the document flow naturally — add transitions, context, and structure. "
         "This should read as a coherent document, not a list of image descriptions.\n"
-        "6. Preserve ALL technical details, numbers, equations, and data faithfully.\n"
-        "7. Output ONLY the Markdown content, no preamble or explanation.\n\n"
+        "5. Preserve ALL technical details, numbers, equations, and data faithfully.\n"
+        "6. Output ONLY the Markdown content, no preamble or explanation.\n\n"
         f"IMAGE ANALYSES ({len(analyses)} images):\n\n"
         f"{image_context}"
     )

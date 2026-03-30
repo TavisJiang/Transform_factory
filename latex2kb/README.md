@@ -184,6 +184,49 @@ run_pipeline(config)
 
 在 `src/latex2kb/environments/` 下添加新模块，实现转换函数后在 `converter.py` 的 `_convert_environment()` 中注册即可。
 
+## img2kb 管线 / img2kb Pipeline
+
+除 LaTeX 转换外，`latex2kb` 还支持将**纯图片文件夹**转为 Markdown 文档。
+
+### 自动检测
+
+CLI 自动判断输入类型：有 `.tex` 文件 → LaTeX 管线，纯图片 → img2kb 管线。同一个命令，无需手动切换。
+
+```bash
+latex2kb path/to/image_folder output/
+#  → output/image_folder_2kb/document.md + figures/
+```
+
+### 工作流程（两轮 AI 调用）
+
+1. **Round 1 — 逐图分析**：对每张图片调用 AI，返回 JSON：
+   - `extracted_text`：图中所有文字（公式用 LaTeX 表示）
+   - `visual_description`：视觉内容描述
+   - `is_textualizable`：true = 内容可完全文本化（纯文字/表格/公式），false = 需要引用图片
+   - `category`：text / table / diagram / chart / photo / screenshot / equation / other
+2. **Round 2 — 文档合成**：将所有分析结果交给 AI，生成连贯的 Markdown
+
+### 输出结构
+
+```
+output/image_folder_2kb/
+├── document.md       # AI 整合的文档
+└── figures/           # 仅包含 is_textualizable=false 的图片
+```
+
+### 配置（`latex2kb.yaml`）
+
+img2kb 和 LaTeX 管线共用 `ai:` 段（provider、model、api_key），img2kb 特有参数：
+
+```yaml
+img2kb:
+  analysis_max_tokens: 2000    # Round 1 单图分析
+  synthesis_max_tokens: 8000   # Round 2 文档合成
+  synthesis_timeout: 120       # Round 2 超时（秒）
+```
+
+**必须配置 API key**——img2kb 完全依赖 AI。模型需要支持 vision（图片输入）。
+
 ## 测试 / Testing
 
 ```bash
