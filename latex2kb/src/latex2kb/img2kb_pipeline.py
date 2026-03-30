@@ -53,6 +53,11 @@ def run_img2kb(config: Img2kbConfig) -> None:
         )
     logger.info("AI provider: %s, model: %s", ai_cfg.provider, ai_cfg.effective_model)
 
+    # Load img2kb-specific config
+    img2kb_cfg = {}
+    if config.config_dict:
+        img2kb_cfg = config.config_dict.get('img2kb', {})
+
     # Stage 1: Scan images
     logger.info("Stage 1: Scanning images...")
     images = _scan_images(config.input_dir)
@@ -67,18 +72,20 @@ def run_img2kb(config: Img2kbConfig) -> None:
         return
 
     # Stage 2: Per-image AI analysis (Round 1)
-    logger.info("Stage 2: Analyzing images (Round 1)...")
+    analysis_tokens = img2kb_cfg.get('analysis_max_tokens', 2000)
+    logger.info("Stage 2: Analyzing images (Round 1, max_tokens=%d)...", analysis_tokens)
     analyses = []
     for i, img_path in enumerate(images, 1):
         logger.info("  [%d/%d] %s", i, len(images), img_path.name)
-        analysis = _analyze_image(img_path, ai_cfg)
+        analysis = _analyze_image(img_path, ai_cfg, analysis_tokens)
         analyses.append(analysis)
         logger.info("    category=%s, textualizable=%s", analysis.category, analysis.is_textualizable)
 
     # Stage 3: Synthesize into Markdown (Round 2)
-    logger.info("Stage 3: Synthesizing document (Round 2)...")
-    # Use a more capable model for synthesis if available
-    synth_cfg = _get_synthesis_config(ai_cfg)
+    synth_tokens = img2kb_cfg.get('synthesis_max_tokens', 8000)
+    synth_timeout = img2kb_cfg.get('synthesis_timeout', 120)
+    logger.info("Stage 3: Synthesizing document (Round 2, max_tokens=%d)...", synth_tokens)
+    synth_cfg = _get_synthesis_config(ai_cfg, synth_tokens, synth_timeout)
     markdown = _synthesize_document(analyses, synth_cfg)
 
     # Stage 4: Determine which images need to be referenced
@@ -119,7 +126,7 @@ def _scan_images(directory: Path) -> list[Path]:
     return images
 
 
-def _analyze_image(image_path: Path, ai_cfg: AIConfig) -> ImageAnalysis:
+def _analyze_image(image_path: Path, ai_cfg: AIConfig, max_tokens: int = 2000) -> ImageAnalysis:
     """Round 1: Analyze a single image with AI."""
     prompt = (
         "Analyze this image and respond in the following JSON format ONLY "
@@ -139,18 +146,19 @@ def _analyze_image(image_path: Path, ai_cfg: AIConfig) -> ImageAnalysis:
         "For math/equations, use LaTeX notation like $E=mc^2$ or $$...$$."
     )
 
-    # Temporarily override the image_prompt
-    original_prompt = ai_cfg.image_prompt
-    ai_cfg.image_prompt = prompt
-    original_max_tokens = ai_cfg.max_tokens
-    ai_cfg.max_tokens = 2000
+    # Create a copy with img2kb-specific settings (don't mutate the shared config)
+    analysis_cfg = AIConfig(
+        provider=ai_cfg.provider,
+        model=ai_cfg.model,
+        api_key=ai_cfg.api_key,
+        base_url=ai_cfg.base_url,
+        image_prompt=prompt,
+        max_tokens=max_tokens,
+        timeout=ai_cfg.timeout,
+    )
 
-    try:
-        from latex2kb.figures import generate_image_description
-        raw = generate_image_description(image_path, ai_cfg)
-    finally:
-        ai_cfg.image_prompt = original_prompt
-        ai_cfg.max_tokens = original_max_tokens
+    from latex2kb.figures import generate_image_description
+    raw = generate_image_description(image_path, analysis_cfg)
 
     if not raw:
         return ImageAnalysis(
@@ -197,16 +205,16 @@ def _parse_analysis_response(filename: str, raw: str) -> ImageAnalysis:
         )
 
 
-def _get_synthesis_config(ai_cfg: AIConfig) -> AIConfig:
-    """Get AI config for synthesis. Same model as Round 1, only adjust tokens/timeout."""
+def _get_synthesis_config(ai_cfg: AIConfig, max_tokens: int = 8000, timeout: int = 120) -> AIConfig:
+    """Get AI config for synthesis. Same model, configurable tokens/timeout."""
     return AIConfig(
         provider=ai_cfg.provider,
         model=ai_cfg.model,
         api_key=ai_cfg.api_key,
         base_url=ai_cfg.base_url,
         image_prompt=ai_cfg.image_prompt,
-        max_tokens=8000,
-        timeout=120,
+        max_tokens=max_tokens,
+        timeout=timeout,
     )
 
 

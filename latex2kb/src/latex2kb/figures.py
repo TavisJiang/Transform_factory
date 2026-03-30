@@ -18,12 +18,11 @@ class AIConfig:
     api_key: str = ""
     base_url: str = ""                  # only for openai-compatible
     image_prompt: str = (
-        "Describe this scientific figure concisely in 1-2 sentences. "
-        "Focus on what the figure shows (data, diagram type, key features) "
-        "rather than aesthetic qualities."
+        "Describe this figure concisely in 1-2 sentences. "
+        "Focus on what it shows (data, diagram type, key features)."
     )
     max_tokens: int = 300
-    timeout: int = 30
+    timeout: int = 60
 
     @property
     def effective_model(self) -> str:

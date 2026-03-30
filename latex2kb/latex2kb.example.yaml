@@ -12,28 +12,27 @@
 # 基本设置 / Basic settings
 # ──────────────────────────────────────────────
 
-# 主 .tex 文件名（留空则自动检测）
-# Main .tex filename (leave empty for auto-detection)
+# 主 .tex 文件名（留空则自动检测，仅 LaTeX 模式）
 # main_tex: main.tex
 
 # 源文件编码 / Source file encoding
 encoding: utf-8
 
 # ──────────────────────────────────────────────
-# 图片处理 / Image handling
+# LaTeX 管线设置 / LaTeX pipeline settings
 # ──────────────────────────────────────────────
 
-# 是否复制图片到输出目录 / Copy images to output directory
+# 是否复制图片到输出目录
 copy_images: true
 
-# 是否启用 AI 图片描述 / Enable AI-powered image descriptions
+# 是否启用 AI 图片描述（LaTeX 管线的可选功能）
 image_descriptions: false
 
 # ──────────────────────────────────────────────
 # AI 提供商配置 / AI Provider Configuration
 #
-# 用于图片描述等 AI 功能
-# Used for image descriptions and other AI features
+# 两个管线共用 provider 和 api_key
+# Shared by both LaTeX and img2kb pipelines
 # ──────────────────────────────────────────────
 
 ai:
@@ -41,37 +40,38 @@ ai:
   provider: anthropic
 
   # 模型名称 / Model name
-  # Anthropic:            claude-haiku-4-5-20251001 (默认, 快且便宜)
-  #                       claude-sonnet-4-6-20250514
-  # OpenAI:               gpt-4o-mini (默认, 快且便宜)
-  #                       gpt-4o
-  # OpenAI-compatible:    任意模型名
-  model: claude-haiku-4-5-20251001
+  # Anthropic:          claude-haiku-4-5-20251001 (快且便宜)
+  #                     claude-sonnet-4-6-20250514 (更强，推荐 img2kb)
+  # OpenAI:             gpt-4o-mini (快且便宜)
+  #                     gpt-4o (更强，推荐 img2kb)
+  # OpenAI-compatible:  任意模型名
+  model: claude-sonnet-4-6-20250514
 
-  # API Key（推荐使用环境变量，比写在文件里更安全）
-  # API key (prefer env vars — safer than putting keys in files)
-  #
-  # 支持的环境变量 / Supported env vars:
-  #   Anthropic:  ANTHROPIC_API_KEY
-  #   OpenAI:     OPENAI_API_KEY
-  #   通用:       LATEX2KB_API_KEY (覆盖以上所有 / overrides all above)
-  #
-  # 也可以直接填写（不推荐提交到版本控制）
-  # Or set directly here (not recommended for version control):
-  # api_key: sk-xxx
+  # API Key（推荐使用环境变量）
+  # 支持的环境变量:
+  #   ANTHROPIC_API_KEY / OPENAI_API_KEY / LATEX2KB_API_KEY
+  # 也可以直接填写（不推荐提交到版本控制）:
+  # api_key: your-api-key
 
   # 自定义 API 端点（仅 openai-compatible 模式需要）
-  # Custom API endpoint (only for openai-compatible provider)
   # base_url: https://your-api.example.com/v1
 
-  # 图片描述的提示词 / Prompt for image descriptions
-  image_prompt: >
-    Describe this scientific figure concisely in 1-2 sentences.
-    Focus on what the figure shows (data, diagram type, key features)
-    rather than aesthetic qualities.
+  # 请求超时（秒）
+  timeout: 60
 
-  # 每次请求的最大 token 数 / Max tokens per request
-  max_tokens: 300
+# ──────────────────────────────────────────────
+# img2kb 管线设置 / img2kb pipeline settings
+#
+# 仅在输入为纯图片文件夹时生效
+# Only used when input is a pure image folder
+# ──────────────────────────────────────────────
 
-  # 请求超时（秒）/ Request timeout in seconds
-  timeout: 30
+img2kb:
+  # Round 1: 单张图片分析的最大 token 数
+  analysis_max_tokens: 2000
+
+  # Round 2: 文档合成的最大 token 数
+  synthesis_max_tokens: 8000
+
+  # Round 2: 合成超时（秒，大量图片时可能需要更长）
+  synthesis_timeout: 120
